@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Crear Predicción - Predicción Fútbol{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0"><i class="bi bi-magic"></i> Crear Predicción</h3>
+            </div>
+            <div class="card-body">
+                <!-- Información del Partido -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Partido</h5>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4>{{ partido.equipo_local.nombre }}</h4>
+                            </div>
+                            <div class="mx-3">
+                                <h3>VS</h3>
+                            </div>
+                            <div>
+                                <h4>{{ partido.equipo_visitante.nombre }}</h4>
+                            </div>
+                        </div>
+                        <p class="text-muted mb-0">
+                            <i class="bi bi-calendar"></i> {{ partido.fecha|date:"d/m/Y H:i" }} | 
+                            <i class="bi bi-trophy"></i> {{ partido.liga.nombre }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Opción 1: Predicción con IA -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-robot"></i> Predicción con Inteligencia Artificial</h5>
+                        <p class="text-muted">Genera una predicción automática usando Google Gemini AI</p>
+                        <form method="post">
+                            {% csrf_token %}
+                            <button type="submit" name="usar_ia" class="btn btn-primary btn-lg w-100">
+                                <i class="bi bi-magic"></i> Generar Predicción con IA
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Opción 2: Predicción Manual -->
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-pencil"></i> Predicción Manual</h5>
+                        <p class="text-muted">Ingresa tu propia predicción del marcador</p>
+                        <form method="post">
+                            {% csrf_token %}
+                            {% crispy form %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

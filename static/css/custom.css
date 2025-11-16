@@ -1,0 +1,43 @@
+/* Estilos personalizados adicionales */
+.partido-card {
+    transition: all 0.3s ease;
+}
+
+.partido-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+.badge-live {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.card-stats {
+    border-left: 4px solid;
+}
+
+.card-stats.text-primary {
+    border-left-color: #0d6efd;
+}
+
+.card-stats.text-success {
+    border-left-color: #198754;
+}
+
+.card-stats.text-info {
+    border-left-color: #0dcaf0;
+}
+
+.card-stats.text-danger {
+    border-left-color: #dc3545;
+}
+

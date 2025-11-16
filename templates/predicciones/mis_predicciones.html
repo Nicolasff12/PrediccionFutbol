@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis Predicciones - Predicción Fútbol{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1><i class="bi bi-graph-up"></i> Mis Predicciones</h1>
+    </div>
+</div>
+
+<!-- Estadísticas -->
+{% if estadisticas.total > 0 %}
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Total</h5>
+                <h2 class="text-primary">{{ estadisticas.total }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Correctas</h5>
+                <h2 class="text-success">{{ estadisticas.correctas }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Incorrectas</h5>
+                <h2 class="text-danger">{{ estadisticas.incorrectas }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Precisión</h5>
+                <h2 class="text-info">{{ estadisticas.precision }}%</h2>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Lista de Predicciones -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Historial de Predicciones</h5>
+                {% if predicciones %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Partido</th>
+                                <th>Mi Predicción</th>
+                                <th>Resultado Real</th>
+                                <th>Estado</th>
+                                <th>Confianza</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prediccion in predicciones %}
+                            <tr>
+                                <td>
+                                    <strong>{{ prediccion.partido.equipo_local.nombre }}</strong> vs 
+                                    <strong>{{ prediccion.partido.equipo_visitante.nombre }}</strong><br>
+                                    <small class="text-muted">{{ prediccion.partido.fecha|date:"d/m/Y H:i" }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info fs-6">
+                                        {{ prediccion.goles_local_predicho }} - {{ prediccion.goles_visitante_predicho }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if prediccion.partido.estado == 'FT' %}
+                                    <span class="badge bg-primary fs-6">
+                                        {{ prediccion.partido.goles_local }} - {{ prediccion.partido.goles_visitante }}
+                                    </span>
+                                    {% else %}
+                                    <span class="text-muted">Por jugar</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if prediccion.es_correcta is True %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i> Correcta
+                                    </span>
+                                    {% elif prediccion.es_correcta is False %}
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-x-circle"></i> Incorrecta
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Pendiente</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if prediccion.confianza > 0 %}
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar" role="progressbar" style="width: {{ prediccion.confianza }}%">
+                                            {{ prediccion.confianza|floatformat:0 }}%
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ prediccion.fecha_prediccion|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    <a href="{% url 'predicciones:detalle' prediccion.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i> Ver
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No has realizado ninguna predicción aún. 
+                    <a href="{% url 'partidos:home' %}">Ve al inicio para crear una predicción</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

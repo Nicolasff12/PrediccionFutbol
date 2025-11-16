@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de Predicción - Predicción Fútbol{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0"><i class="bi bi-eye"></i> Detalle de Predicción</h3>
+            </div>
+            <div class="card-body">
+                <!-- Información del Partido -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Partido</h5>
+                        <div class="row">
+                            <div class="col-md-5 text-center">
+                                <h4>{{ prediccion.partido.equipo_local.nombre }}</h4>
+                                {% if prediccion.partido.estado == 'FT' %}
+                                <h2 class="text-primary">{{ prediccion.partido.goles_local }}</h2>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <h3>VS</h3>
+                            </div>
+                            <div class="col-md-5 text-center">
+                                <h4>{{ prediccion.partido.equipo_visitante.nombre }}</h4>
+                                {% if prediccion.partido.estado == 'FT' %}
+                                <h2 class="text-primary">{{ prediccion.partido.goles_visitante }}</h2>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-center mt-3">
+                            <p class="text-muted mb-0">
+                                <i class="bi bi-calendar"></i> {{ prediccion.partido.fecha|date:"d/m/Y H:i" }} | 
+                                <i class="bi bi-trophy"></i> {{ prediccion.partido.liga.nombre }}
+                            </p>
+                            <span class="badge bg-{% if prediccion.partido.estado == 'FT' %}success{% elif prediccion.partido.estado == 'LIVE' %}danger{% else %}secondary{% endif %} mt-2">
+                                {% if prediccion.partido.estado == 'FT' %}FINALIZADO{% elif prediccion.partido.estado == 'LIVE' %}EN VIVO{% else %}POR JUGAR{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mi Predicción -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Mi Predicción</h5>
+                        <div class="row">
+                            <div class="col-md-5 text-center">
+                                <h4>{{ prediccion.partido.equipo_local.nombre }}</h4>
+                                <h2 class="text-info">{{ prediccion.goles_local_predicho }}</h2>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <h3>-</h3>
+                            </div>
+                            <div class="col-md-5 text-center">
+                                <h4>{{ prediccion.partido.equipo_visitante.nombre }}</h4>
+                                <h2 class="text-info">{{ prediccion.goles_visitante_predicho }}</h2>
+                            </div>
+                        </div>
+                        {% if prediccion.confianza > 0 %}
+                        <div class="mt-3">
+                            <label>Nivel de Confianza:</label>
+                            <div class="progress" style="height: 30px;">
+                                <div class="progress-bar" role="progressbar" style="width: {{ prediccion.confianza }}%">
+                                    {{ prediccion.confianza|floatformat:0 }}%
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="mt-3">
+                            {% if prediccion.es_correcta is True %}
+                            <span class="badge bg-success fs-6">
+                                <i class="bi bi-check-circle"></i> Predicción Correcta
+                            </span>
+                            {% elif prediccion.es_correcta is False %}
+                            <span class="badge bg-danger fs-6">
+                                <i class="bi bi-x-circle"></i> Predicción Incorrecta
+                            </span>
+                            {% else %}
+                            <span class="badge bg-secondary fs-6">Pendiente de verificación</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Análisis de IA -->
+                {% if prediccion.prediccion_ia %}
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-robot"></i> Análisis de Inteligencia Artificial</h5>
+                        <p class="text-muted">{{ prediccion.prediccion_ia|linebreaks }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="mt-4">
+                    <a href="{% url 'predicciones:mis_predicciones' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
