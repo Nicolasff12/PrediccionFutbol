@@ -1,0 +1,342 @@
+{% extends 'base.html' %}
+
+{% block title %}Comparar Equipos{% endblock %}
+
+{% block extra_css %}
+<style>
+    .comparison-card {
+        border-left: 4px solid #667eea;
+    }
+    .stat-comparison {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        margin: 5px 0;
+        background: #f8f9fa;
+        border-radius: 5px;
+    }
+    .stat-bar {
+        height: 20px;
+        border-radius: 10px;
+        margin: 5px 0;
+    }
+    .team1-color { background-color: #667eea; }
+    .team2-color { background-color: #764ba2; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1><i class="bi bi-arrow-left-right"></i> Comparar Equipos</h1>
+    </div>
+</div>
+
+<!-- Selector de Equipos -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-5">
+                        <label for="equipo1" class="form-label">Equipo 1</label>
+                        <select name="equipo1" id="equipo1" class="form-select" required>
+                            <option value="">Selecciona un equipo...</option>
+                            {% for equipo in todos_equipos %}
+                            <option value="{{ equipo.id }}" {% if equipo1 and equipo1.id == equipo.id %}selected{% endif %}>
+                                {{ equipo.nombre }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label for="equipo2" class="form-label">Equipo 2</label>
+                        <select name="equipo2" id="equipo2" class="form-select" required>
+                            <option value="">Selecciona un equipo...</option>
+                            {% for equipo in todos_equipos %}
+                            <option value="{{ equipo.id }}" {% if equipo2 and equipo2.id == equipo.id %}selected{% endif %}>
+                                {{ equipo.nombre }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i> Comparar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if equipo1 and equipo2 %}
+<!-- Comparación -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card comparison-card h-100">
+            <div class="card-header bg-primary text-white text-center">
+                <h4 class="mb-0">
+                    {% if equipo1.escudo %}
+                    <img src="{{ equipo1.escudo }}" alt="{{ equipo1.nombre }}" style="max-width: 50px; max-height: 50px; margin-right: 10px;">
+                    {% endif %}
+                    {{ equipo1.nombre }}
+                </h4>
+            </div>
+            <div class="card-body">
+                {% if estadisticas1 %}
+                <h5>Estadísticas de la Temporada</h5>
+                <p><strong>Posición:</strong> #{{ estadisticas1.posicion|default:"N/A" }}</p>
+                <p><strong>Puntos:</strong> {{ estadisticas1.puntos }}</p>
+                <p><strong>Partidos Jugados:</strong> {{ estadisticas1.partidos_jugados }}</p>
+                <p><strong>Victorias:</strong> {{ estadisticas1.victorias }}</p>
+                <p><strong>Empates:</strong> {{ estadisticas1.empates }}</p>
+                <p><strong>Derrotas:</strong> {{ estadisticas1.derrotas }}</p>
+                <p><strong>Goles a Favor:</strong> {{ estadisticas1.goles_a_favor }}</p>
+                <p><strong>Goles en Contra:</strong> {{ estadisticas1.goles_en_contra }}</p>
+                <p><strong>Diferencia:</strong> {{ estadisticas1.diferencia_goles }}</p>
+                <p><strong>Promedio GF:</strong> {{ estadisticas1.promedio_goles_favor|floatformat:2 }}</p>
+                {% else %}
+                <p class="text-muted">No hay estadísticas disponibles.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card comparison-card h-100">
+            <div class="card-header bg-secondary text-white text-center">
+                <h4 class="mb-0">
+                    {% if equipo2.escudo %}
+                    <img src="{{ equipo2.escudo }}" alt="{{ equipo2.nombre }}" style="max-width: 50px; max-height: 50px; margin-right: 10px;">
+                    {% endif %}
+                    {{ equipo2.nombre }}
+                </h4>
+            </div>
+            <div class="card-body">
+                {% if estadisticas2 %}
+                <h5>Estadísticas de la Temporada</h5>
+                <p><strong>Posición:</strong> #{{ estadisticas2.posicion|default:"N/A" }}</p>
+                <p><strong>Puntos:</strong> {{ estadisticas2.puntos }}</p>
+                <p><strong>Partidos Jugados:</strong> {{ estadisticas2.partidos_jugados }}</p>
+                <p><strong>Victorias:</strong> {{ estadisticas2.victorias }}</p>
+                <p><strong>Empates:</strong> {{ estadisticas2.empates }}</p>
+                <p><strong>Derrotas:</strong> {{ estadisticas2.derrotas }}</p>
+                <p><strong>Goles a Favor:</strong> {{ estadisticas2.goles_a_favor }}</p>
+                <p><strong>Goles en Contra:</strong> {{ estadisticas2.goles_en_contra }}</p>
+                <p><strong>Diferencia:</strong> {{ estadisticas2.diferencia_goles }}</p>
+                <p><strong>Promedio GF:</strong> {{ estadisticas2.promedio_goles_favor|floatformat:2 }}</p>
+                {% else %}
+                <p class="text-muted">No hay estadísticas disponibles.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Comparación Visual -->
+{% if estadisticas1 and estadisticas2 %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Comparación Visual</h5>
+            </div>
+            <div class="card-body">
+                <!-- Puntos -->
+                <div class="mb-3">
+                    <strong>Puntos:</strong>
+                    <div class="stat-comparison">
+                        <span>{{ estadisticas1.puntos }}</span>
+                        <div class="progress flex-grow-1 mx-3" style="height: 25px;">
+                            {% with total=estadisticas1.puntos|add:estadisticas2.puntos %}
+                            {% if total > 0 %}
+                            {% widthratio estadisticas1.puntos total 100 as porcentaje1 %}
+                            {% widthratio estadisticas2.puntos total 100 as porcentaje2 %}
+                            <div class="progress-bar team1-color" style="width: {{ porcentaje1 }}%">{{ estadisticas1.puntos }}</div>
+                            <div class="progress-bar team2-color" style="width: {{ porcentaje2 }}%">{{ estadisticas2.puntos }}</div>
+                            {% else %}
+                            <div class="progress-bar team1-color" style="width: 50%">0</div>
+                            <div class="progress-bar team2-color" style="width: 50%">0</div>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                        <span>{{ estadisticas2.puntos }}</span>
+                    </div>
+                </div>
+                
+                <!-- Goles a Favor -->
+                <div class="mb-3">
+                    <strong>Goles a Favor:</strong>
+                    <div class="stat-comparison">
+                        <span>{{ estadisticas1.goles_a_favor }}</span>
+                        <div class="progress flex-grow-1 mx-3" style="height: 25px;">
+                            {% with total=estadisticas1.goles_a_favor|add:estadisticas2.goles_a_favor %}
+                            {% if total > 0 %}
+                            {% widthratio estadisticas1.goles_a_favor total 100 as porcentaje_gf1 %}
+                            {% widthratio estadisticas2.goles_a_favor total 100 as porcentaje_gf2 %}
+                            <div class="progress-bar team1-color" style="width: {{ porcentaje_gf1 }}%">{{ estadisticas1.goles_a_favor }}</div>
+                            <div class="progress-bar team2-color" style="width: {{ porcentaje_gf2 }}%">{{ estadisticas2.goles_a_favor }}</div>
+                            {% else %}
+                            <div class="progress-bar team1-color" style="width: 50%">0</div>
+                            <div class="progress-bar team2-color" style="width: 50%">0</div>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                        <span>{{ estadisticas2.goles_a_favor }}</span>
+                    </div>
+                </div>
+                
+                <!-- Victorias -->
+                <div class="mb-3">
+                    <strong>Victorias:</strong>
+                    <div class="stat-comparison">
+                        <span>{{ estadisticas1.victorias }}</span>
+                        <div class="progress flex-grow-1 mx-3" style="height: 25px;">
+                            {% with total=estadisticas1.victorias|add:estadisticas2.victorias %}
+                            {% if total > 0 %}
+                            {% widthratio estadisticas1.victorias total 100 as porcentaje_v1 %}
+                            {% widthratio estadisticas2.victorias total 100 as porcentaje_v2 %}
+                            <div class="progress-bar team1-color" style="width: {{ porcentaje_v1 }}%">{{ estadisticas1.victorias }}</div>
+                            <div class="progress-bar team2-color" style="width: {{ porcentaje_v2 }}%">{{ estadisticas2.victorias }}</div>
+                            {% else %}
+                            <div class="progress-bar team1-color" style="width: 50%">0</div>
+                            <div class="progress-bar team2-color" style="width: 50%">0</div>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                        <span>{{ estadisticas2.victorias }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Últimos Partidos -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Últimos Partidos - {{ equipo1.nombre }}</h5>
+            </div>
+            <div class="card-body">
+                {% if ultimos_partidos1 %}
+                <ul class="list-group list-group-flush">
+                    {% for partido in ultimos_partidos1 %}
+                    <li class="list-group-item">
+                        <strong>{{ partido.resultado }}</strong> vs {{ partido.rival }}
+                        <br>
+                        <small class="text-muted">{{ partido.fecha }} - {{ partido.condicion|title }}</small>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted">No hay partidos recientes disponibles.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Últimos Partidos - {{ equipo2.nombre }}</h5>
+            </div>
+            <div class="card-body">
+                {% if ultimos_partidos2 %}
+                <ul class="list-group list-group-flush">
+                    {% for partido in ultimos_partidos2 %}
+                    <li class="list-group-item">
+                        <strong>{{ partido.resultado }}</strong> vs {{ partido.rival }}
+                        <br>
+                        <small class="text-muted">{{ partido.fecha }} - {{ partido.condicion|title }}</small>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted">No hay partidos recientes disponibles.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Historial de Enfrentamientos -->
+{% if historial_enfrentamientos %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Historial de Enfrentamientos</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Resultado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for enfrentamiento in historial_enfrentamientos %}
+                            <tr>
+                                <td>{{ enfrentamiento.fecha }}</td>
+                                <td><strong>{{ enfrentamiento.resultado }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Próximo Enfrentamiento -->
+{% if proximo_enfrentamiento %}
+<div class="row">
+    <div class="col-12">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Próximo Enfrentamiento</h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-4 text-center">
+                        <h4>{{ proximo_enfrentamiento.equipo_local.nombre }}</h4>
+                        {% if proximo_enfrentamiento.equipo_local.escudo %}
+                        <img src="{{ proximo_enfrentamiento.equipo_local.escudo }}" alt="{{ proximo_enfrentamiento.equipo_local.nombre }}" 
+                             style="max-width: 80px; max-height: 80px;">
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <h3>VS</h3>
+                        <p class="mb-0">{{ proximo_enfrentamiento.fecha|date:"d/m/Y H:i" }}</p>
+                        <a href="{% url 'predicciones:crear' proximo_enfrentamiento.id %}" class="btn btn-primary mt-2">
+                            <i class="bi bi-magic"></i> Predecir con IA
+                        </a>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <h4>{{ proximo_enfrentamiento.equipo_visitante.nombre }}</h4>
+                        {% if proximo_enfrentamiento.equipo_visitante.escudo %}
+                        <img src="{{ proximo_enfrentamiento.equipo_visitante.escudo }}" alt="{{ proximo_enfrentamiento.equipo_visitante.nombre }}" 
+                             style="max-width: 80px; max-height: 80px;">
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endif %}
+
+{% endblock %}
+

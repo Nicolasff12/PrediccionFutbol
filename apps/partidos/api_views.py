@@ -10,6 +10,7 @@ import json
 from typing import Dict, List
 from datetime import datetime, timedelta
 from .services import BesoccerService
+# from .services import EstadisticasCalculadas  # Deshabilitado temporalmente
 from .models import Liga, Equipo, Partido
 from .controllers import PartidoController
 from .utils import calcular_estadisticas_equipo, calcular_forma_equipo, calcular_probabilidades_partido
@@ -207,9 +208,16 @@ class HomeDataAPIView(View):
                 # Calcular probabilidades basadas en estadísticas históricas
                 probabilidades = calcular_probabilidades_partido(partido)
                 
-                # Obtener estadísticas para mostrar
-                stats_local = calcular_estadisticas_equipo(partido.equipo_local, partido.liga)
-                stats_visitante = calcular_estadisticas_equipo(partido.equipo_visitante, partido.liga)
+                # Obtener estadísticas para mostrar (usar utils, NO EstadisticasCalculadas por ahora)
+                stats_local = None
+                stats_visitante = None
+                try:
+                    stats_local = calcular_estadisticas_equipo(partido.equipo_local, partido.liga)
+                    stats_visitante = calcular_estadisticas_equipo(partido.equipo_visitante, partido.liga)
+                except Exception as e:
+                    logger.warning(f"Error calculando estadísticas: {e}")
+                    stats_local = {}
+                    stats_visitante = {}
                 
                 proximos.append({
                     'id': partido.id,
@@ -219,13 +227,15 @@ class HomeDataAPIView(View):
                         'nombre': partido.equipo_local.nombre if partido.equipo_local else '',
                         'escudo': partido.equipo_local.escudo if partido.equipo_local else '',
                         'forma': forma_local,
+                        'posicion': stats_local.get('posicion') if stats_local else None,
                         'estadisticas': {
-                            'victorias': stats_local.get('victorias', 0),
-                            'empates': stats_local.get('empates', 0),
-                            'derrotas': stats_local.get('derrotas', 0),
-                            'goles_favor': stats_local.get('goles_favor', 0),
-                            'goles_contra': stats_local.get('goles_contra', 0),
-                            'promedio_goles_favor': stats_local.get('promedio_goles_favor', 0),
+                            'victorias': stats_local.get('victorias', 0) if stats_local else 0,
+                            'empates': stats_local.get('empates', 0) if stats_local else 0,
+                            'derrotas': stats_local.get('derrotas', 0) if stats_local else 0,
+                            'goles_favor': stats_local.get('goles_a_favor', stats_local.get('goles_favor', 0)) if stats_local else 0,
+                            'goles_contra': stats_local.get('goles_en_contra', stats_local.get('goles_contra', 0)) if stats_local else 0,
+                            'promedio_goles_favor': stats_local.get('promedio_goles_favor', 0) if stats_local else 0,
+                            'puntos': stats_local.get('puntos', 0) if stats_local else 0,
                         }
                     },
                     'equipo_visitante': {
@@ -233,18 +243,20 @@ class HomeDataAPIView(View):
                         'nombre': partido.equipo_visitante.nombre if partido.equipo_visitante else '',
                         'escudo': partido.equipo_visitante.escudo if partido.equipo_visitante else '',
                         'forma': forma_visitante,
+                        'posicion': stats_visitante.get('posicion') if stats_visitante else None,
                         'estadisticas': {
-                            'victorias': stats_visitante.get('victorias', 0),
-                            'empates': stats_visitante.get('empates', 0),
-                            'derrotas': stats_visitante.get('derrotas', 0),
-                            'goles_favor': stats_visitante.get('goles_favor', 0),
-                            'goles_contra': stats_visitante.get('goles_contra', 0),
-                            'promedio_goles_favor': stats_visitante.get('promedio_goles_favor', 0),
+                            'victorias': stats_visitante.get('victorias', 0) if stats_visitante else 0,
+                            'empates': stats_visitante.get('empates', 0) if stats_visitante else 0,
+                            'derrotas': stats_visitante.get('derrotas', 0) if stats_visitante else 0,
+                            'goles_favor': stats_visitante.get('goles_a_favor', stats_visitante.get('goles_favor', 0)) if stats_visitante else 0,
+                            'goles_contra': stats_visitante.get('goles_en_contra', stats_visitante.get('goles_contra', 0)) if stats_visitante else 0,
+                            'promedio_goles_favor': stats_visitante.get('promedio_goles_favor', 0) if stats_visitante else 0,
+                            'puntos': stats_visitante.get('puntos', 0) if stats_visitante else 0,
                         }
                     },
                     'fecha': partido.fecha.strftime('%Y-%m-%d') if partido.fecha else '',
                     'hora': partido.fecha.strftime('%H:%M') if partido.fecha else '',
-                    'estadio': getattr(partido, 'estadio', None) or 'N/A',
+                    'estadio': getattr(partido, 'estadio', None) or 'Estadio por confirmar',
                     'probabilidades': probabilidades
                 })
             return proximos
@@ -307,39 +319,51 @@ class HomeDataAPIView(View):
         return proximos
     
     def _obtener_tabla_posiciones(self, competition_id: str) -> List[Dict]:
-        """Obtiene la tabla de posiciones"""
+        """Obtiene la tabla de posiciones (intenta API primero, luego calcula desde BD local)"""
+        # Intentar obtener de la API
         tabla_data = besoccer_service.obtener_tabla_posiciones(competition_id)
         
-        # Si no hay datos de la API, retornar lista vacía (se puede calcular desde partidos locales)
-        if not tabla_data:
-            return []
+        # Si hay datos de la API, procesarlos
+        if tabla_data:
+            tabla = []
+            for item in tabla_data:
+                # Calcular racha
+                equipo_id = item.get('team_id')
+                ultimos_partidos = besoccer_service.obtener_ultimos_partidos_equipo(equipo_id, 5)
+                racha = _calcular_forma_equipo(ultimos_partidos, equipo_id)
+                
+                tabla.append({
+                    'posicion': item.get('position', 0),
+                    'equipo': {
+                        'id': equipo_id,
+                        'nombre': item.get('team_name', ''),
+                        'escudo': item.get('team_logo', '')
+                    },
+                    'puntos': item.get('points', 0),
+                    'pj': item.get('played', 0),
+                    'pg': item.get('won', 0),
+                    'pe': item.get('drawn', 0),
+                    'pp': item.get('lost', 0),
+                    'gf': item.get('goals_for', 0),
+                    'gc': item.get('goals_against', 0),
+                    'dg': item.get('goal_difference', 0),
+                    'racha': racha
+                })
+            return tabla
         
-        tabla = []
-        for item in tabla_data:
-            # Calcular racha
-            equipo_id = item.get('team_id')
-            ultimos_partidos = besoccer_service.obtener_ultimos_partidos_equipo(equipo_id, 5)
-            racha = _calcular_forma_equipo(ultimos_partidos, equipo_id)
-            
-            tabla.append({
-                'posicion': item.get('position', 0),
-                'equipo': {
-                    'id': equipo_id,
-                    'nombre': item.get('team_name', ''),
-                    'escudo': item.get('team_logo', '')
-                },
-                'puntos': item.get('points', 0),
-                'pj': item.get('played', 0),
-                'pg': item.get('won', 0),
-                'pe': item.get('drawn', 0),
-                'pp': item.get('lost', 0),
-                'gf': item.get('goals_for', 0),
-                'gc': item.get('goals_against', 0),
-                'dg': item.get('goal_difference', 0),
-                'racha': racha
-            })
+        # Si no hay datos de la API, NO calcular desde base de datos local (deshabilitado temporalmente)
+        # try:
+        #     liga = Liga.objects.filter(id_api__isnull=False).first()
+        #     if not liga:
+        #         liga = Liga.objects.first()
+        #     
+        #     if liga:
+        #         tabla_calculada = EstadisticasCalculadas.obtener_tabla_posiciones(liga)
+        #         # ... resto del código deshabilitado
+        # except Exception as e:
+        #     logger.warning(f"Error calculando tabla de posiciones: {e}")
         
-        return tabla
+        return []
     
     def _obtener_equipos_destacados(self, competition_id: str, tabla: List[Dict]) -> Dict:
         """Obtiene equipos destacados"""
@@ -389,6 +413,7 @@ class HomeDataAPIView(View):
     def _obtener_estadisticas_globales(self, competition_id: str, tabla: List[Dict]) -> Dict:
         """Obtiene estadísticas globales del torneo"""
         if not tabla:
+            # NO calcular desde BD local (deshabilitado temporalmente)
             return {}
         
         # Calcular promedio de goles por partido
@@ -402,7 +427,7 @@ class HomeDataAPIView(View):
         # Equipo con menos goles recibidos
         menos_goles_recibidos = min(tabla, key=lambda x: x['gc'])
         
-        # Máximo goleador
+        # Máximo goleador (intentar desde API, si no está disponible será None)
         goleadores = besoccer_service.obtener_goleadores_liga(competition_id, limite=1)
         max_goleador = None
         if goleadores:
@@ -412,7 +437,7 @@ class HomeDataAPIView(View):
                 'goles': goleadores[0].get('goals', 0)
             }
         
-        # Próxima fecha
+        # Próxima fecha (intentar desde API, si no desde BD local)
         proximos = besoccer_service.obtener_partidos_proximos(competition_id, limite=1)
         proxima_fecha = None
         if proximos:
@@ -421,6 +446,22 @@ class HomeDataAPIView(View):
                 'fecha': fecha_str,
                 'partidos': len(proximos)
             }
+        else:
+            # Buscar en BD local
+            from datetime import datetime, timezone
+            now = datetime.now(timezone.utc)
+            proximo_partido = Partido.objects.filter(
+                fecha__gte=now,
+                estado='NS'
+            ).order_by('fecha').first()
+            if proximo_partido:
+                proxima_fecha = {
+                    'fecha': proximo_partido.fecha.strftime('%Y-%m-%d'),
+                    'partidos': Partido.objects.filter(
+                        fecha__date=proximo_partido.fecha.date(),
+                        estado='NS'
+                    ).count()
+                }
         
         return {
             'promedio_goles_por_partido': promedio_goles,

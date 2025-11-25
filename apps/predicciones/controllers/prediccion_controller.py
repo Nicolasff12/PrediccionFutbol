@@ -5,8 +5,9 @@ from typing import Dict, Optional
 from django.contrib.auth import get_user_model
 from apps.predicciones.models import Prediccion
 from apps.predicciones.services import GeminiService
-from apps.partidos.models import Partido
+from apps.partidos.models import Partido, Equipo
 from apps.partidos.services import BesoccerService
+from apps.partidos.services.estadisticas_calculadas import EstadisticasCalculadas
 import logging
 from datetime import datetime
 
@@ -42,10 +43,11 @@ class PrediccionController:
             }
             
             # Obtener estadísticas detalladas de ambos equipos
+            # Primero intentar desde la API, si falla usar datos locales
             try:
                 estadisticas_local = self._obtener_estadisticas_equipo(
-                    partido.equipo_local.id_api,
-                    partido.liga.id_api
+                    partido.equipo_local,
+                    partido.liga
                 )
                 if estadisticas_local:
                     partido_data['estadisticas_local'] = estadisticas_local
@@ -54,8 +56,8 @@ class PrediccionController:
             
             try:
                 estadisticas_visitante = self._obtener_estadisticas_equipo(
-                    partido.equipo_visitante.id_api,
-                    partido.liga.id_api
+                    partido.equipo_visitante,
+                    partido.liga
                 )
                 if estadisticas_visitante:
                     partido_data['estadisticas_visitante'] = estadisticas_visitante
@@ -63,9 +65,11 @@ class PrediccionController:
                 logger.warning(f"Error obteniendo estadísticas del equipo visitante: {e}")
             
             # Obtener últimos partidos de ambos equipos
+            # Primero intentar desde la API, si falla usar datos locales
             try:
                 ultimos_partidos_local = self._obtener_ultimos_partidos_formateados(
-                    partido.equipo_local.id_api
+                    partido.equipo_local,
+                    partido.liga
                 )
                 if ultimos_partidos_local:
                     partido_data['ultimos_partidos_local'] = ultimos_partidos_local
@@ -74,7 +78,8 @@ class PrediccionController:
             
             try:
                 ultimos_partidos_visitante = self._obtener_ultimos_partidos_formateados(
-                    partido.equipo_visitante.id_api
+                    partido.equipo_visitante,
+                    partido.liga
                 )
                 if ultimos_partidos_visitante:
                     partido_data['ultimos_partidos_visitante'] = ultimos_partidos_visitante
@@ -82,15 +87,25 @@ class PrediccionController:
                 logger.warning(f"Error obteniendo últimos partidos del equipo visitante: {e}")
             
             # Obtener historial de enfrentamientos (opcional)
+            # Primero intentar desde la API, si falla usar datos locales
             try:
                 historial = self._obtener_historial_enfrentamientos(
-                    partido.equipo_local.id_api,
-                    partido.equipo_visitante.id_api
+                    partido.equipo_local,
+                    partido.equipo_visitante,
+                    partido.liga
                 )
                 if historial:
                     partido_data['historial_enfrentamientos'] = historial
             except Exception as e:
                 logger.warning(f"Error obteniendo historial de enfrentamientos: {e}")
+            
+            # Obtener tabla de posiciones para contexto adicional
+            try:
+                tabla = EstadisticasCalculadas.obtener_tabla_posiciones(partido.liga)
+                if tabla:
+                    partido_data['tabla_posiciones'] = tabla[:10]  # Top 10
+            except Exception as e:
+                logger.warning(f"Error obteniendo tabla de posiciones: {e}")
             
             # Obtener predicción de Gemini con todos los datos
             prediccion_data = self.gemini_service.generar_prediccion(partido_data)
@@ -113,11 +128,30 @@ class PrediccionController:
             logger.error(f"Error al crear predicción: {e}", exc_info=True)
             return None
     
-    def _obtener_estadisticas_equipo(self, equipo_id: int, liga_id: int) -> Optional[Dict]:
-        """Obtiene y formatea las estadísticas de un equipo"""
+    def _obtener_estadisticas_equipo(self, equipo: Equipo, liga) -> Optional[Dict]:
+        """Obtiene y formatea las estadísticas de un equipo (intenta API primero, luego datos locales)"""
         try:
-            # Obtener estadísticas de la API
-            stats = self.besoccer_service.obtener_estadisticas_equipo_detalladas(equipo_id)
+            # Primero intentar desde la API de Besoccer
+            if equipo.id_api:
+                stats = self.besoccer_service.obtener_estadisticas_equipo_detalladas(equipo.id_api)
+                if stats:
+                    return self._formatear_estadisticas_api(stats)
+            
+            # Si la API no funciona, calcular desde datos locales
+            stats = EstadisticasCalculadas.obtener_estadisticas_equipo(equipo, liga)
+            return stats
+            
+        except Exception as e:
+            logger.warning(f"Error obteniendo estadísticas del equipo {equipo.id}: {e}")
+            # Último recurso: calcular desde datos locales
+            try:
+                return EstadisticasCalculadas.obtener_estadisticas_equipo(equipo, liga)
+            except:
+                return None
+    
+    def _formatear_estadisticas_api(self, stats: Dict) -> Optional[Dict]:
+        """Formatea estadísticas obtenidas de la API"""
+        try:
             if not stats:
                 return None
             
@@ -173,13 +207,33 @@ class PrediccionController:
             return estadisticas if estadisticas else None
             
         except Exception as e:
-            logger.warning(f"Error formateando estadísticas del equipo {equipo_id}: {e}")
+            logger.warning(f"Error formateando estadísticas de la API: {e}")
             return None
     
-    def _obtener_ultimos_partidos_formateados(self, equipo_id: int, limite: int = 5) -> list:
-        """Obtiene y formatea los últimos partidos de un equipo"""
+    def _obtener_ultimos_partidos_formateados(self, equipo: Equipo, liga, limite: int = 5) -> list:
+        """Obtiene y formatea los últimos partidos de un equipo (intenta API primero, luego datos locales)"""
         try:
-            partidos = self.besoccer_service.obtener_ultimos_partidos_equipo(equipo_id, limite)
+            # Primero intentar desde la API
+            if equipo.id_api:
+                partidos = self.besoccer_service.obtener_ultimos_partidos_equipo(equipo.id_api, limite)
+                if partidos:
+                    return self._formatear_partidos_api(partidos, equipo.id_api)
+            
+            # Si la API no funciona, usar datos locales
+            partidos = EstadisticasCalculadas.obtener_ultimos_partidos_equipo(equipo, liga, limite)
+            return partidos
+            
+        except Exception as e:
+            logger.warning(f"Error obteniendo últimos partidos del equipo {equipo.id}: {e}")
+            # Último recurso: datos locales
+            try:
+                return EstadisticasCalculadas.obtener_ultimos_partidos_equipo(equipo, liga, limite)
+            except:
+                return []
+    
+    def _formatear_partidos_api(self, partidos: list, equipo_id: int) -> list:
+        """Formatea partidos obtenidos de la API"""
+        try:
             if not partidos:
                 return []
             
@@ -217,35 +271,49 @@ class PrediccionController:
             return partidos_formateados
             
         except Exception as e:
-            logger.warning(f"Error formateando últimos partidos del equipo {equipo_id}: {e}")
+            logger.warning(f"Error formateando partidos de la API: {e}")
             return []
     
-    def _obtener_historial_enfrentamientos(self, equipo_local_id: int, equipo_visitante_id: int) -> list:
-        """Obtiene el historial de enfrentamientos entre dos equipos"""
+    def _obtener_historial_enfrentamientos(self, equipo_local: Equipo, equipo_visitante: Equipo, liga) -> list:
+        """Obtiene el historial de enfrentamientos entre dos equipos (intenta API primero, luego datos locales)"""
         try:
-            # Obtener últimos partidos del equipo local y filtrar los que fueron contra el visitante
-            partidos_local = self.besoccer_service.obtener_ultimos_partidos_equipo(equipo_local_id, 20)
-            
-            historial = []
-            for partido in partidos_local:
-                home_id = partido.get('home_team', {}).get('id') if isinstance(partido.get('home_team'), dict) else None
-                away_id = partido.get('away_team', {}).get('id') if isinstance(partido.get('away_team'), dict) else None
+            # Primero intentar desde la API
+            if equipo_local.id_api and equipo_visitante.id_api:
+                partidos_local = self.besoccer_service.obtener_ultimos_partidos_equipo(equipo_local.id_api, 20)
                 
-                # Verificar si este partido fue contra el equipo visitante
-                if (home_id == equipo_local_id and away_id == equipo_visitante_id) or \
-                   (home_id == equipo_visitante_id and away_id == equipo_local_id):
-                    resultado = f"{partido.get('home_score', 0)}-{partido.get('away_score', 0)}"
-                    fecha = partido.get('date', '') or partido.get('datetime', '')
-                    historial.append({
-                        'resultado': resultado,
-                        'fecha': fecha
-                    })
+                historial = []
+                for partido in partidos_local:
+                    home_id = partido.get('home_team', {}).get('id') if isinstance(partido.get('home_team'), dict) else None
+                    away_id = partido.get('away_team', {}).get('id') if isinstance(partido.get('away_team'), dict) else None
+                    
+                    # Verificar si este partido fue contra el equipo visitante
+                    if (home_id == equipo_local.id_api and away_id == equipo_visitante.id_api) or \
+                       (home_id == equipo_visitante.id_api and away_id == equipo_local.id_api):
+                        resultado = f"{partido.get('home_score', 0)}-{partido.get('away_score', 0)}"
+                        fecha = partido.get('date', '') or partido.get('datetime', '')
+                        historial.append({
+                            'resultado': resultado,
+                            'fecha': fecha
+                        })
+                
+                if historial:
+                    return historial[:5]  # Últimos 5 enfrentamientos
             
-            return historial[:5]  # Últimos 5 enfrentamientos
+            # Si la API no funciona, usar datos locales
+            historial = EstadisticasCalculadas.obtener_historial_enfrentamientos(
+                equipo_local, equipo_visitante, liga, limite=5
+            )
+            return historial
             
         except Exception as e:
             logger.warning(f"Error obteniendo historial de enfrentamientos: {e}")
-            return []
+            # Último recurso: datos locales
+            try:
+                return EstadisticasCalculadas.obtener_historial_enfrentamientos(
+                    equipo_local, equipo_visitante, liga, limite=5
+                )
+            except:
+                return []
     
     def crear_prediccion_manual(self, usuario, partido: Partido, goles_local: int, goles_visitante: int) -> Prediccion:
         """Crea una predicción manual del usuario"""

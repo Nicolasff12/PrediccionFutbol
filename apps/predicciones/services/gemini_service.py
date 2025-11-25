@@ -40,11 +40,16 @@ class GeminiService:
         Selecciona un modelo compatible de Gemini.
         Intenta con diferentes modelos en orden de preferencia.
         """
-        # Lista de modelos a intentar en orden de preferencia
+        # Lista de modelos a intentar en orden de preferencia (modelos actuales disponibles)
         modelos_a_intentar = [
-            'gemini-pro',  # Modelo más estable y compatible
-            'gemini-1.0-pro',  # Versión alternativa
-            'models/gemini-pro',  # Con prefijo models/
+            'gemini-2.0-flash',  # Modelo rápido y eficiente
+            'models/gemini-2.0-flash',  # Con prefijo models/
+            'gemini-2.5-flash',  # Versión más reciente
+            'models/gemini-2.5-flash',  # Con prefijo models/
+            'gemini-2.0-flash-001',  # Versión específica
+            'models/gemini-2.0-flash-001',  # Con prefijo models/
+            'gemini-2.5-pro',  # Modelo pro
+            'models/gemini-2.5-pro',  # Con prefijo models/
         ]
         
         for modelo_nombre in modelos_a_intentar:
@@ -52,6 +57,7 @@ class GeminiService:
                 model = genai.GenerativeModel(modelo_nombre)
                 # Hacer una prueba rápida para verificar que funciona
                 # (no generamos contenido, solo verificamos que el modelo existe)
+                logger.info(f"Modelo {modelo_nombre} encontrado y disponible")
                 return model, modelo_nombre
             except Exception as e:
                 logger.debug(f"Modelo {modelo_nombre} no disponible: {e}")
@@ -61,11 +67,13 @@ class GeminiService:
         try:
             modelos_disponibles = genai.list_models()
             for modelo in modelos_disponibles:
-                # Buscar modelos que soporten generateContent
-                if 'generateContent' in modelo.supported_generation_methods:
+                # Buscar modelos que soporten generateContent y contengan "gemini" y "flash"
+                if ('generateContent' in modelo.supported_generation_methods and 
+                    'gemini' in modelo.name.lower() and 
+                    'flash' in modelo.name.lower()):
                     try:
                         model = genai.GenerativeModel(modelo.name)
-                        logger.info(f"Usando modelo disponible: {modelo.name}")
+                        logger.info(f"Usando modelo disponible encontrado: {modelo.name}")
                         return model, modelo.name
                     except:
                         continue
@@ -224,17 +232,28 @@ Fecha: {fecha}
             prompt += self._formatear_historial(historial, nombre_local, nombre_visitante)
             prompt += "\n"
         
+        # Agregar tabla de posiciones si está disponible
+        tabla_posiciones = partido_data.get('tabla_posiciones', [])
+        if tabla_posiciones:
+            prompt += f"═══════════════════════════════════════════════════════════════\n"
+            prompt += f"TABLA DE POSICIONES (Top 10)\n"
+            prompt += f"═══════════════════════════════════════════════════════════════\n"
+            prompt += self._formatear_tabla_posiciones(tabla_posiciones)
+            prompt += "\n"
+        
         # Instrucciones finales
         prompt += """═══════════════════════════════════════════════════════════════
 INSTRUCCIONES
 ═══════════════════════════════════════════════════════════════
 
 Basándote en toda la información proporcionada, analiza:
-1. La forma reciente de ambos equipos
-2. Las estadísticas ofensivas y defensivas
-3. El historial de enfrentamientos (si está disponible)
-4. La ventaja de jugar en casa para el equipo local
-5. Cualquier factor relevante que pueda influir en el resultado
+1. La forma reciente de ambos equipos (últimos partidos)
+2. Las estadísticas ofensivas y defensivas de cada equipo
+3. La posición en la tabla de posiciones (si está disponible)
+4. El historial de enfrentamientos entre ambos equipos (si está disponible)
+5. La ventaja de jugar en casa para el equipo local
+6. Las estadísticas como local vs visitante
+7. Cualquier factor relevante que pueda influir en el resultado
 
 Proporciona:
 1. Una predicción del marcador final (goles del local y del visitante)
@@ -363,6 +382,30 @@ Ejemplo de respuesta esperada:
             fecha = enfrentamiento.get('fecha', '')
             resultado = enfrentamiento.get('resultado', '')
             texto += f"{i}. {resultado} - {fecha}\n"
+        
+        return texto
+    
+    def _formatear_tabla_posiciones(self, tabla: List[Dict]) -> str:
+        """Formatea la tabla de posiciones"""
+        if not tabla:
+            return "Tabla de posiciones no disponible"
+        
+        texto = "Pos | Equipo | Pts | PJ | V | E | D | GF | GC | DG\n"
+        texto += "-" * 60 + "\n"
+        
+        for equipo in tabla[:10]:  # Top 10
+            pos = equipo.get('posicion', 0)
+            nombre = equipo.get('equipo', 'N/A')
+            pts = equipo.get('puntos', 0)
+            pj = equipo.get('partidos_jugados', 0)
+            v = equipo.get('victorias', 0)
+            e = equipo.get('empates', 0)
+            d = equipo.get('derrotas', 0)
+            gf = equipo.get('goles_favor', 0)
+            gc = equipo.get('goles_contra', 0)
+            dg = equipo.get('diferencia_goles', 0)
+            
+            texto += f"{pos:3d} | {nombre[:20]:20s} | {pts:3d} | {pj:2d} | {v:2d} | {e:2d} | {d:2d} | {gf:2d} | {gc:2d} | {dg:+3d}\n"
         
         return texto
     
