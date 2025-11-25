@@ -1,0 +1,236 @@
+================================================================================
+GUÍA PARA EXPLICAR TUS NECESIDADES DE LA API
+================================================================================
+
+Usa este formato para explicarme qué necesitas de la API de BeSoccer:
+
+--------------------------------------------------------------------------------
+1. CONTEXTO Y OBJETIVO
+--------------------------------------------------------------------------------
+
+¿Qué quieres lograr con la API?
+Ejemplo:
+- "Necesito mostrar los próximos partidos de la Liga Colombia en mi página web"
+- "Quiero calcular probabilidades de ganar basadas en estadísticas de equipos"
+- "Necesito sincronizar datos de partidos en tiempo real"
+
+--------------------------------------------------------------------------------
+2. DATOS ESPECÍFICOS QUE NECESITAS
+--------------------------------------------------------------------------------
+
+Lista los datos exactos que necesitas obtener:
+
+A. DATOS DE PARTIDOS:
+   - ¿Qué información del partido necesitas?
+     * Equipos (local y visitante)
+     * Fecha y hora
+     * Estadio
+     * Resultado (si ya se jugó)
+     * Estado (próximo, en vivo, finalizado)
+     * Probabilidades
+     * Forma de los equipos (últimos 5 resultados)
+
+B. DATOS DE EQUIPOS:
+   - ¿Qué información del equipo necesitas?
+     * Nombre y escudo
+     * Posición en la tabla
+     * Puntos
+     * Estadísticas (victorias, empates, derrotas)
+     * Goles a favor/en contra
+     * Forma reciente
+     * Jugadores destacados
+
+C. DATOS DE LIGA/TORNEO:
+   - ¿Qué información de la liga necesitas?
+     * Tabla de posiciones completa
+     * Próxima fecha
+     * Estadísticas globales (promedio de goles, etc.)
+     * Goleadores
+     * Equipos destacados
+
+D. DATOS DE JUGADORES:
+   - ¿Qué información de jugadores necesitas?
+     * Goleadores
+     * Asistencias
+     * Jugadores lesionados
+     * Jugadores suspendidos
+
+--------------------------------------------------------------------------------
+3. DÓNDE SE MOSTRARÁN LOS DATOS
+--------------------------------------------------------------------------------
+
+Explica dónde y cómo se mostrarán:
+- "En la página principal (home) del sitio"
+- "En una página de comparación de partidos"
+- "En un dashboard de estadísticas"
+- "En una API REST que expongo a otros servicios"
+
+Ejemplo:
+"Necesito mostrar los próximos 10 partidos en la página principal, cada uno con:
+- Escudos de los equipos
+- Nombre de los equipos
+- Fecha y hora
+- Estadio
+- Probabilidades de ganar (local/empate/visitante)
+- Forma reciente de cada equipo (últimos 5 resultados)"
+
+--------------------------------------------------------------------------------
+4. FRECUENCIA DE ACTUALIZACIÓN
+--------------------------------------------------------------------------------
+
+¿Con qué frecuencia necesitas actualizar los datos?
+- "Una vez al día"
+- "Cada hora"
+- "En tiempo real (cada minuto)"
+- "Solo cuando el usuario recarga la página"
+
+Ejemplo:
+"Los datos deben actualizarse cada vez que el usuario entra a la página,
+pero no necesito actualización en tiempo real mientras está navegando"
+
+--------------------------------------------------------------------------------
+5. FORMATO DE RESPUESTA DESEADO
+--------------------------------------------------------------------------------
+
+¿En qué formato necesitas los datos?
+- JSON para API REST
+- Objetos Python para usar directamente
+- Datos formateados para mostrar en HTML
+- Datos para guardar en base de datos
+
+Ejemplo:
+"Necesito los datos en formato JSON que pueda usar en JavaScript para
+mostrarlos dinámicamente en la página web"
+
+--------------------------------------------------------------------------------
+6. LIMITACIONES O RESTRICCIONES
+--------------------------------------------------------------------------------
+
+¿Hay alguna limitación que deba considerar?
+- "Solo tengo acceso al método 'teams' de la API"
+- "No puedo hacer más de X peticiones por minuto"
+- "Necesito que funcione aunque algunos datos no estén disponibles"
+- "Debe funcionar sin conexión a internet (usar datos locales)"
+
+Ejemplo:
+"Mi plan de API solo permite obtener equipos, así que necesito calcular
+las estadísticas y probabilidades desde los datos que ya tengo en mi
+base de datos local"
+
+--------------------------------------------------------------------------------
+7. EJEMPLOS CONCRETOS
+--------------------------------------------------------------------------------
+
+Si es posible, da ejemplos específicos:
+
+Ejemplo 1 - Próximos Partidos:
+"Necesito mostrar en la página principal:
+- Millonarios vs Atlético Nacional
+  Fecha: 26/11/2025 19:00
+  Estadio: El Campín
+  Probabilidades: Local 45%, Empate 30%, Visitante 25%
+  Forma Millonarios: WWDLW (últimos 5 partidos)
+  Forma Atlético Nacional: WDWLL"
+
+Ejemplo 2 - Estadísticas de Equipo:
+"Cuando el usuario hace clic en un equipo, necesito mostrar:
+- Posición: 3
+- Puntos: 28
+- Partidos jugados: 15
+- Victorias: 8, Empates: 4, Derrotas: 3
+- Goles a favor: 22
+- Goles en contra: 12
+- Promedio de goles por partido: 1.47"
+
+--------------------------------------------------------------------------------
+8. PRIORIDADES
+--------------------------------------------------------------------------------
+
+Si hay muchas cosas, indica qué es más importante:
+
+Alta prioridad:
+- "Lo más importante es mostrar los próximos partidos con probabilidades"
+
+Media prioridad:
+- "Sería bueno tener la tabla de posiciones"
+
+Baja prioridad:
+- "Si es posible, mostrar los goleadores, pero no es crítico"
+
+--------------------------------------------------------------------------------
+9. CASOS ESPECIALES O EDGE CASES
+--------------------------------------------------------------------------------
+
+¿Hay situaciones especiales a considerar?
+- "¿Qué pasa si no hay partidos próximos?"
+- "¿Qué pasa si un equipo no tiene estadísticas?"
+- "¿Qué pasa si la API está caída?"
+
+Ejemplo:
+"Si no hay partidos próximos, debo mostrar un mensaje amigable que diga
+'No hay partidos próximos. Vuelve más tarde.'"
+
+--------------------------------------------------------------------------------
+10. FORMATO DE RESPUESTA ESPERADA
+--------------------------------------------------------------------------------
+
+¿Cómo quieres que te responda?
+- "Muéstrame el código que necesito agregar"
+- "Explícame qué cambios hacer en los archivos existentes"
+- "Dame un ejemplo completo de cómo quedaría"
+- "Solo necesito que me digas si es posible o no"
+
+================================================================================
+EJEMPLO COMPLETO DE CÓMO EXPLICAR TUS NECESIDADES:
+================================================================================
+
+CONTEXTO:
+Necesito mejorar la página principal de mi aplicación de predicción de fútbol
+para mostrar información más completa y útil a los usuarios.
+
+DATOS ESPECÍFICOS:
+1. Próximos partidos (máximo 10):
+   - Equipos con escudos
+   - Fecha, hora y estadio
+   - Probabilidades calculadas (local/empate/visitante)
+   - Forma reciente de cada equipo (últimos 5 resultados)
+   - Estadísticas básicas (victorias, empates, derrotas, goles)
+
+2. Tabla de posiciones:
+   - Top 10 equipos
+   - Posición, puntos, partidos jugados
+   - Goles a favor/en contra
+   - Diferencia de goles
+
+DÓNDE SE MUESTRA:
+En la página principal (home.html), en secciones separadas.
+
+FRECUENCIA:
+Cada vez que el usuario recarga la página o hace clic en "Actualizar".
+
+FORMATO:
+Datos en JSON desde una API endpoint que luego se muestran con JavaScript
+en el frontend.
+
+LIMITACIONES:
+Mi plan de API solo permite obtener equipos (req=teams), así que necesito
+calcular todo lo demás desde los datos que ya tengo en mi base de datos local.
+
+PRIORIDADES:
+1. Alta: Próximos partidos con probabilidades
+2. Media: Tabla de posiciones
+3. Baja: Estadísticas detalladas de equipos
+
+CASOS ESPECIALES:
+- Si no hay partidos próximos, mostrar mensaje amigable
+- Si no hay datos suficientes para calcular probabilidades, usar valores
+  por defecto (40% local, 30% empate, 30% visitante)
+
+RESPUESTA ESPERADA:
+Muéstrame el código completo que necesito agregar o modificar, con
+comentarios explicando qué hace cada parte.
+
+================================================================================
+FIN DE LA GUÍA
+================================================================================
+

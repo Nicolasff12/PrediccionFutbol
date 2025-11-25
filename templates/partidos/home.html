@@ -2,11 +2,45 @@
 
 {% block title %}Inicio - Predicción Fútbol{% endblock %}
 
+{% block extra_css %}
+<style>
+    .loading-spinner {
+        text-align: center;
+        padding: 40px;
+    }
+    .forma-badge {
+        font-family: monospace;
+        font-weight: bold;
+        padding: 4px 8px;
+    }
+    .forma-W { background-color: #28a745; color: white; }
+    .forma-D { background-color: #ffc107; color: black; }
+    .forma-L { background-color: #dc3545; color: white; }
+    .probabilidad-bar {
+        height: 8px;
+        border-radius: 4px;
+        margin-top: 4px;
+    }
+    .equipo-destacado-card {
+        border-left: 4px solid #667eea;
+    }
+    .tabla-posiciones th {
+        background-color: #667eea;
+        color: white;
+        font-weight: 600;
+    }
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center">
-            <h1><i class="bi bi-trophy"></i> Liga BetPlay</h1>
+            <h1><i class="bi bi-trophy"></i> Liga BetPlay Dimayor - Colombia</h1>
             <form method="post" action="{% url 'partidos:sincronizar' %}">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-primary">
@@ -17,165 +51,574 @@
     </div>
 </div>
 
-<!-- Estadísticas -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-calendar-event"></i> Total Partidos</h5>
-                <h2 class="text-primary">{{ estadisticas.total_partidos }}</h2>
+<!-- Loading Spinner -->
+<div id="loading-spinner" class="loading-spinner">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+    </div>
+    <p class="mt-2">Cargando datos del torneo...</p>
+</div>
+
+<!-- Contenido principal (oculto hasta cargar) -->
+<div id="main-content" style="display: none;">
+    <!-- Estadísticas Globales -->
+    <div class="row mb-4" id="estadisticas-globales">
+        <!-- Se llenará con JavaScript -->
+    </div>
+
+    <!-- A. Próximos Partidos -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="mb-3"><i class="bi bi-calendar-check"></i> Próximos Partidos</h3>
+            <div id="proximos-partidos" class="row">
+                <!-- Se llenará con JavaScript -->
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-check-circle"></i> Finalizados</h5>
-                <h2 class="text-success">{{ estadisticas.partidos_finalizados }}</h2>
+
+    <!-- B. Tabla de Posiciones -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="mb-3"><i class="bi bi-table"></i> Tabla de Posiciones</h3>
+            <div class="table-responsive">
+                <table class="table table-hover tabla-posiciones" id="tabla-posiciones">
+                    <thead>
+                        <tr>
+                            <th>Pos</th>
+                            <th>Equipo</th>
+                            <th>Pts</th>
+                            <th>PJ</th>
+                            <th>PG</th>
+                            <th>PE</th>
+                            <th>PP</th>
+                            <th>GF</th>
+                            <th>GC</th>
+                            <th>DG</th>
+                            <th>Racha</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Se llenará con JavaScript -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-clock"></i> Próximos</h5>
-                <h2 class="text-info">{{ estadisticas.partidos_proximos }}</h2>
+
+    <!-- C. Equipos Destacados -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="mb-3"><i class="bi bi-star-fill"></i> Equipos Destacados</h3>
+            <div class="row" id="equipos-destacados">
+                <!-- Se llenará con JavaScript -->
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-broadcast"></i> En Vivo</h5>
-                <h2 class="text-danger">{{ estadisticas.partidos_en_vivo }}</h2>
+
+    <!-- Partidos Recientes (mantener funcionalidad existente) -->
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-3"><i class="bi bi-clock-history"></i> Partidos Recientes</h3>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Equipo Local</th>
+                            <th>Resultado</th>
+                            <th>Equipo Visitante</th>
+                            <th>Liga</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for partido in partidos_recientes %}
+                        <tr>
+                            <td>{{ partido.fecha|date:"d/m/Y H:i" }}</td>
+                            <td><strong>{{ partido.equipo_local.nombre }}</strong></td>
+                            <td class="text-center">
+                                <span class="badge bg-primary fs-6">{{ partido.goles_local }} - {{ partido.goles_visitante }}</span>
+                            </td>
+                            <td><strong>{{ partido.equipo_visitante.nombre }}</strong></td>
+                            <td>{{ partido.liga.nombre }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No hay partidos recientes.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Partidos de Hoy -->
-{% if partidos_hoy %}
-<div class="row mb-4">
-    <div class="col-12">
-        <h3 class="mb-3"><i class="bi bi-calendar-day"></i> Partidos de Hoy</h3>
-        <div class="row">
-            {% for partido in partidos_hoy %}
-            <div class="col-md-6 mb-3">
-                <div class="card partido-card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="badge bg-{% if partido.estado == 'LIVE' %}danger{% elif partido.estado == 'FT' %}success{% else %}secondary{% endif %}">
-                                {% if partido.estado == 'LIVE' %}<span class="badge-live">EN VIVO</span>{% elif partido.estado == 'FT' %}FINALIZADO{% else %}POR JUGAR{% endif %}
-                            </span>
-                            <small class="text-muted">{{ partido.fecha|date:"H:i" }}</small>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="text-center flex-fill">
-                                <h5>{{ partido.equipo_local.nombre }}</h5>
-                                {% if partido.estado == 'FT' or partido.estado == 'LIVE' %}
-                                <h3 class="text-primary">{{ partido.goles_local }}</h3>
-                                {% endif %}
-                            </div>
-                            <div class="mx-3">
-                                <h4>VS</h4>
-                            </div>
-                            <div class="text-center flex-fill">
-                                <h5>{{ partido.equipo_visitante.nombre }}</h5>
-                                {% if partido.estado == 'FT' or partido.estado == 'LIVE' %}
-                                <h3 class="text-primary">{{ partido.goles_visitante }}</h3>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="text-center mt-3">
-                            <a href="{% url 'predicciones:crear' partido.id %}" class="btn btn-sm btn-primary">
-                                <i class="bi bi-magic"></i> Predecir
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</div>
-{% endif %}
-
-<!-- Próximos Partidos -->
-<div class="row mb-4">
-    <div class="col-12">
-        <h3 class="mb-3"><i class="bi bi-calendar-check"></i> Próximos Partidos</h3>
-        <div class="row">
-            {% for partido in partidos_proximos %}
-            <div class="col-md-6 mb-3">
-                <div class="card partido-card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="badge bg-secondary">POR JUGAR</span>
-                            <small class="text-muted">{{ partido.fecha|date:"d/m/Y H:i" }}</small>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="text-center flex-fill">
-                                <h5>{{ partido.equipo_local.nombre }}</h5>
-                            </div>
-                            <div class="mx-3">
-                                <h4>VS</h4>
-                            </div>
-                            <div class="text-center flex-fill">
-                                <h5>{{ partido.equipo_visitante.nombre }}</h5>
-                            </div>
-                        </div>
-                        <div class="text-center mt-3">
-                            <a href="{% url 'predicciones:crear' partido.id %}" class="btn btn-sm btn-primary">
-                                <i class="bi bi-magic"></i> Predecir con IA
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% empty %}
-            <div class="col-12">
-                <div class="alert alert-info">No hay partidos próximos disponibles.</div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</div>
-
-<!-- Partidos Recientes -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="mb-3"><i class="bi bi-clock-history"></i> Partidos Recientes</h3>
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Equipo Local</th>
-                        <th>Resultado</th>
-                        <th>Equipo Visitante</th>
-                        <th>Liga</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for partido in partidos_recientes %}
-                    <tr>
-                        <td>{{ partido.fecha|date:"d/m/Y H:i" }}</td>
-                        <td><strong>{{ partido.equipo_local.nombre }}</strong></td>
-                        <td class="text-center">
-                            <span class="badge bg-primary fs-6">{{ partido.goles_local }} - {{ partido.goles_visitante }}</span>
-                        </td>
-                        <td><strong>{{ partido.equipo_visitante.nombre }}</strong></td>
-                        <td>{{ partido.liga.nombre }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center">No hay partidos recientes.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM cargado, iniciando carga de datos...');
+    
+    // Timeout de seguridad: si después de 10 segundos no hay respuesta, mostrar error
+    const timeout = setTimeout(() => {
+        const spinner = document.getElementById('loading-spinner');
+        const mainContent = document.getElementById('main-content');
+        if (spinner && spinner.style.display !== 'none') {
+            console.error('Timeout: La carga de datos está tardando demasiado');
+            spinner.innerHTML = 
+                `<div class="alert alert-warning">
+                    <h5>La carga está tardando demasiado</h5>
+                    <p>Por favor, recarga la página o verifica tu conexión.</p>
+                    <button onclick="location.reload()" class="btn btn-sm btn-primary">Recargar Página</button>
+                </div>`;
+            if (mainContent) mainContent.style.display = 'block';
+        }
+    }, 10000);
+    
+    cargarDatosHome().then(() => {
+        clearTimeout(timeout);
+    }).catch(error => {
+        clearTimeout(timeout);
+        console.error('Error en cargarDatosHome:', error);
+    });
+});
+
+async function cargarDatosHome() {
+    console.log('Cargando datos del home...');
+    console.log('URL:', '{% url "partidos:api_home_data" %}');
+    
+    try {
+        const response = await fetch('{% url "partidos:api_home_data" %}', {
+            credentials: 'same-origin',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Datos recibidos:', data);
+        
+        // Ocultar spinner y mostrar contenido
+        const spinner = document.getElementById('loading-spinner');
+        const mainContent = document.getElementById('main-content');
+        
+        if (spinner) spinner.style.display = 'none';
+        if (mainContent) mainContent.style.display = 'block';
+        
+        // Verificar si hay error en la respuesta
+        if (data.error) {
+            console.error('Error en la API:', data.error);
+            
+            // Mostrar mensaje de error pero también mostrar equipos disponibles si existen
+            if (data.equipos_disponibles && data.equipos_disponibles.length > 0) {
+                mostrarEquiposDisponibles(data.equipos_disponibles, data.info);
+            } else {
+                const container = document.getElementById('estadisticas-globales');
+                if (container) {
+                    container.innerHTML = `<div class="col-12"><div class="alert alert-warning">${data.error}</div></div>`;
+                }
+            }
+            return;
+        }
+        
+        // PRIORIDAD: Mostrar equipos disponibles si existen
+        if (data.equipos_disponibles && data.equipos_disponibles.length > 0) {
+            console.log('Mostrando equipos disponibles...');
+            mostrarEquiposDisponibles(data.equipos_disponibles, data.info);
+            // Si hay equipos disponibles, NO mostrar estadísticas globales vacías
+        } else if (data.estadisticas_globales && Object.keys(data.estadisticas_globales).length > 0) {
+            // Solo mostrar estadísticas globales si hay datos reales y NO hay equipos disponibles
+            mostrarEstadisticasGlobales(data.estadisticas_globales);
+        }
+        
+        // Mostrar otros datos (pueden estar vacíos)
+        mostrarProximosPartidos(data.proximos_partidos || []);
+        mostrarTablaPosiciones(data.tabla_posiciones || []);
+        mostrarEquiposDestacados(data.equipos_destacados || {});
+        
+        console.log('Datos mostrados correctamente');
+        
+    } catch (error) {
+        console.error('Error cargando datos:', error);
+        console.error('Error completo:', error);
+        const spinner = document.getElementById('loading-spinner');
+        if (spinner) {
+            spinner.innerHTML = 
+                `<div class="alert alert-danger">
+                    <h5>Error al cargar los datos</h5>
+                    <p>${error.message || 'Error desconocido'}</p>
+                    <p><small>Por favor, verifica la consola del navegador (F12) para más detalles.</small></p>
+                    <p><small>O intenta sincronizar los partidos desde el botón "Sincronizar Partidos".</small></p>
+                    <button onclick="location.reload()" class="btn btn-sm btn-primary mt-2">Recargar Página</button>
+                </div>`;
+        }
+        // Intentar mostrar contenido principal aunque haya error
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) mainContent.style.display = 'block';
+    }
+}
+
+function mostrarEstadisticasGlobales(stats) {
+    const container = document.getElementById('estadisticas-globales');
+    container.innerHTML = `
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card text-center">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-graph-up"></i> Promedio Goles</h5>
+                    <h2>${stats.promedio_goles_por_partido || 0}</h2>
+                    <small>goles por partido</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-trophy"></i> Más Goleador</h5>
+                    <h6>${stats.equipo_mas_goles?.equipo?.nombre || 'N/A'}</h6>
+                    <p class="mb-0"><strong>${stats.equipo_mas_goles?.goles || 0}</strong> goles</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-shield-check"></i> Más Sólido</h5>
+                    <h6>${stats.equipo_menos_goles_recibidos?.equipo?.nombre || 'N/A'}</h6>
+                    <p class="mb-0"><strong>${stats.equipo_menos_goles_recibidos?.goles || 0}</strong> goles recibidos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-person-star"></i> Máximo Goleador</h5>
+                    <h6>${stats.maximo_goleador?.nombre || 'N/A'}</h6>
+                    <p class="mb-0"><strong>${stats.maximo_goleador?.goles || 0}</strong> goles</p>
+                    <small>${stats.maximo_goleador?.equipo || ''}</small>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function mostrarProximosPartidos(partidos) {
+    const container = document.getElementById('proximos-partidos');
+    
+    if (!partidos || partidos.length === 0) {
+        container.innerHTML = '<div class="col-12"><div class="alert alert-info">No hay partidos próximos disponibles. Sincroniza los partidos para ver los próximos encuentros.</div></div>';
+        return;
+    }
+    
+    container.innerHTML = partidos.map(partido => {
+        const fecha = new Date(partido.fecha + 'T' + (partido.hora || '00:00'));
+        const fechaStr = fecha.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const horaStr = partido.hora || fecha.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+        
+        // Estadísticas del equipo local
+        const statsLocal = partido.equipo_local.estadisticas || {};
+        const statsVisitante = partido.equipo_visitante.estadisticas || {};
+        
+        return `
+            <div class="col-md-6 mb-4">
+                <div class="card partido-card shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge bg-primary">PRÓXIMO PARTIDO</span>
+                            <small class="text-muted"><i class="bi bi-calendar"></i> ${fechaStr} <i class="bi bi-clock"></i> ${horaStr}</small>
+                        </div>
+                        
+                        <div class="row align-items-center mb-3">
+                            <div class="col-5 text-center">
+                                <img src="${partido.equipo_local.escudo || ''}" alt="${partido.equipo_local.nombre}" 
+                                     class="img-fluid" style="max-width: 60px; max-height: 60px; object-fit: contain;" 
+                                     onerror="this.style.display='none'">
+                                <h6 class="mt-2 mb-1"><strong>${partido.equipo_local.nombre}</strong></h6>
+                                
+                                ${statsLocal.victorias !== undefined ? `
+                                    <div class="mt-2">
+                                        <small class="text-muted d-block">Forma: ${renderizarForma(partido.equipo_local.forma)}</small>
+                                        <small class="text-muted d-block mt-1">
+                                            <i class="bi bi-trophy-fill text-success"></i> ${statsLocal.victorias || 0}V 
+                                            <i class="bi bi-dash-circle text-warning"></i> ${statsLocal.empates || 0}E 
+                                            <i class="bi bi-x-circle text-danger"></i> ${statsLocal.derrotas || 0}D
+                                        </small>
+                                        <small class="text-muted d-block mt-1">
+                                            <i class="bi bi-arrow-up-circle text-success"></i> ${statsLocal.goles_favor || 0}GF 
+                                            <i class="bi bi-arrow-down-circle text-danger"></i> ${statsLocal.goles_contra || 0}GC
+                                        </small>
+                                        <small class="text-muted d-block mt-1">
+                                            <i class="bi bi-graph-up"></i> Prom: ${(statsLocal.promedio_goles_favor || 0).toFixed(1)} goles/partido
+                                        </small>
+                                    </div>
+                                ` : `
+                                    <div class="mt-2">
+                                        ${renderizarForma(partido.equipo_local.forma)}
+                                    </div>
+                                `}
+                            </div>
+                            
+                            <div class="col-2 text-center">
+                                <h3 class="text-muted">VS</h3>
+                            </div>
+                            
+                            <div class="col-5 text-center">
+                                <img src="${partido.equipo_visitante.escudo || ''}" alt="${partido.equipo_visitante.nombre}" 
+                                     class="img-fluid" style="max-width: 60px; max-height: 60px; object-fit: contain;" 
+                                     onerror="this.style.display='none'">
+                                <h6 class="mt-2 mb-1"><strong>${partido.equipo_visitante.nombre}</strong></h6>
+                                
+                                ${statsVisitante.victorias !== undefined ? `
+                                    <div class="mt-2">
+                                        <small class="text-muted d-block">Forma: ${renderizarForma(partido.equipo_visitante.forma)}</small>
+                                        <small class="text-muted d-block mt-1">
+                                            <i class="bi bi-trophy-fill text-success"></i> ${statsVisitante.victorias || 0}V 
+                                            <i class="bi bi-dash-circle text-warning"></i> ${statsVisitante.empates || 0}E 
+                                            <i class="bi bi-x-circle text-danger"></i> ${statsVisitante.derrotas || 0}D
+                                        </small>
+                                        <small class="text-muted d-block mt-1">
+                                            <i class="bi bi-arrow-up-circle text-success"></i> ${statsVisitante.goles_favor || 0}GF 
+                                            <i class="bi bi-arrow-down-circle text-danger"></i> ${statsVisitante.goles_contra || 0}GC
+                                        </small>
+                                        <small class="text-muted d-block mt-1">
+                                            <i class="bi bi-graph-up"></i> Prom: ${(statsVisitante.promedio_goles_favor || 0).toFixed(1)} goles/partido
+                                        </small>
+                                    </div>
+                                ` : `
+                                    <div class="mt-2">
+                                        ${renderizarForma(partido.equipo_visitante.forma)}
+                                    </div>
+                                `}
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="mt-3">
+                            <small class="text-muted"><i class="bi bi-geo-alt"></i> ${partido.estadio || 'Estadio por confirmar'}</small>
+                            
+                            <div class="mt-3">
+                                <h6 class="mb-2"><i class="bi bi-percent"></i> Probabilidades de Resultado:</h6>
+                                <div class="row text-center mb-2">
+                                    <div class="col-4">
+                                        <div class="p-2 bg-light rounded">
+                                            <strong class="text-success">${partido.probabilidades.local}%</strong>
+                                            <div class="small text-muted">Local</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-2 bg-light rounded">
+                                            <strong class="text-warning">${partido.probabilidades.empate}%</strong>
+                                            <div class="small text-muted">Empate</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-2 bg-light rounded">
+                                            <strong class="text-danger">${partido.probabilidades.visitante}%</strong>
+                                            <div class="small text-muted">Visitante</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                         style="width: ${partido.probabilidades.local}%" 
+                                         title="Local: ${partido.probabilidades.local}%">
+                                        ${partido.probabilidades.local}%
+                                    </div>
+                                    <div class="progress-bar bg-warning" role="progressbar" 
+                                         style="width: ${partido.probabilidades.empate}%" 
+                                         title="Empate: ${partido.probabilidades.empate}%">
+                                        ${partido.probabilidades.empate}%
+                                    </div>
+                                    <div class="progress-bar bg-danger" role="progressbar" 
+                                         style="width: ${partido.probabilidades.visitante}%" 
+                                         title="Visitante: ${partido.probabilidades.visitante}%">
+                                        ${partido.probabilidades.visitante}%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            ${partido.id ? `
+                                <a href="/predicciones/crear/${partido.id}/" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-magic"></i> Predecir con IA
+                                </a>
+                            ` : `
+                                <small class="text-muted">Sincroniza los partidos para predecir con IA</small>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderizarForma(forma) {
+    if (!forma || forma === 'N/A') return '<span class="text-muted">-</span>';
+    
+    return forma.split('').map(resultado => {
+        const clase = resultado === 'W' ? 'forma-W' : resultado === 'D' ? 'forma-D' : 'forma-L';
+        return `<span class="badge ${clase} forma-badge">${resultado}</span>`;
+    }).join(' ');
+}
+
+function mostrarTablaPosiciones(tabla) {
+    const tbody = document.querySelector('#tabla-posiciones tbody');
+    
+    if (!tabla || tabla.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="11" class="text-center">No hay datos disponibles.</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = tabla.map(item => `
+        <tr>
+            <td><strong>${item.posicion}</strong></td>
+            <td>
+                <img src="${item.equipo.escudo || ''}" alt="${item.equipo.nombre}" 
+                     style="max-width: 30px; max-height: 30px; margin-right: 8px;" onerror="this.style.display='none'">
+                <strong>${item.equipo.nombre}</strong>
+            </td>
+            <td><strong>${item.puntos}</strong></td>
+            <td>${item.pj}</td>
+            <td>${item.pg}</td>
+            <td>${item.pe}</td>
+            <td>${item.pp}</td>
+            <td>${item.gf}</td>
+            <td>${item.gc}</td>
+            <td>${item.dg >= 0 ? '+' : ''}${item.dg}</td>
+            <td>${renderizarForma(item.racha)}</td>
+        </tr>
+    `).join('');
+}
+
+function mostrarEquiposDisponibles(equipos, info) {
+    console.log('=== mostrarEquiposDisponibles llamado ===');
+    console.log('Número de equipos:', equipos.length);
+    console.log('Equipos:', equipos);
+    
+    const container = document.getElementById('estadisticas-globales');
+    
+    if (!container) {
+        console.error('ERROR: No se encontró el contenedor estadisticas-globales');
+        return;
+    }
+    
+    console.log('Contenedor encontrado, generando HTML...');
+    
+    let html = `
+        <div class="col-12 mb-4">
+            <div class="alert alert-info">
+                <h5><i class="bi bi-info-circle"></i> Información</h5>
+                <p class="mb-0">${info || 'Equipos disponibles desde la API de BeSoccer'}</p>
+            </div>
+        </div>
+        <div class="col-12 mb-3">
+            <h4><i class="bi bi-people"></i> Equipos Disponibles (${equipos.length})</h4>
+        </div>
+    `;
+    
+    equipos.forEach((equipo, index) => {
+        const nombre = (equipo.nombre || 'Sin nombre').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        const fullName = (equipo.fullName || equipo.nombre || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        const nombreCorto = (equipo.nombre_corto || '').replace(/"/g, '&quot;');
+        const escudo = (equipo.escudo || '').replace(/"/g, '&quot;');
+        
+        html += `
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card text-center h-100 shadow-sm">
+                    <div class="card-body d-flex flex-column">
+                        <img src="${escudo}" alt="${nombre}" 
+                             class="mx-auto mb-2" 
+                             style="max-width: 80px; max-height: 80px; object-fit: contain;" 
+                             onerror="this.style.display='none'">
+                        <h6 class="card-title">${nombre}</h6>
+                        <p class="card-text flex-grow-1"><small class="text-muted">${fullName}</small></p>
+                        <span class="badge bg-secondary">${nombreCorto}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    console.log('=== HTML insertado correctamente ===');
+    console.log('Total de equipos mostrados:', equipos.length);
+}
+
+function mostrarEquiposDestacados(destacados) {
+    const container = document.getElementById('equipos-destacados');
+    
+    let html = '';
+    
+    if (destacados.mejor_racha) {
+        html += `
+            <div class="col-md-3 mb-3">
+                <div class="card equipo-destacado-card">
+                    <div class="card-body">
+                        <h6 class="card-title"><i class="bi bi-fire"></i> Mejor Racha</h6>
+                        <h5>${destacados.mejor_racha.equipo.nombre}</h5>
+                        <div>${renderizarForma(destacados.mejor_racha.racha)}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (destacados.mas_goleador) {
+        html += `
+            <div class="col-md-3 mb-3">
+                <div class="card equipo-destacado-card">
+                    <div class="card-body">
+                        <h6 class="card-title"><i class="bi bi-bullseye"></i> Más Goleador</h6>
+                        <h5>${destacados.mas_goleador.equipo.nombre}</h5>
+                        <p class="mb-0"><strong>${destacados.mas_goleador.goles}</strong> goles</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (destacados.mas_solido) {
+        html += `
+            <div class="col-md-3 mb-3">
+                <div class="card equipo-destacado-card">
+                    <div class="card-body">
+                        <h6 class="card-title"><i class="bi bi-shield-check"></i> Más Sólido</h6>
+                        <h5>${destacados.mas_solido.equipo.nombre}</h5>
+                        <p class="mb-0"><strong>${destacados.mas_solido.goles_recibidos}</strong> goles recibidos</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (destacados.jugador_destacado) {
+        html += `
+            <div class="col-md-3 mb-3">
+                <div class="card equipo-destacado-card">
+                    <div class="card-body">
+                        <h6 class="card-title"><i class="bi bi-person-star"></i> Jugador Destacado</h6>
+                        <h5>${destacados.jugador_destacado.nombre}</h5>
+                        <p class="mb-0"><strong>${destacados.jugador_destacado.goles}</strong> goles</p>
+                        <small>${destacados.jugador_destacado.equipo}</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = html || '<div class="col-12"><div class="alert alert-info">No hay equipos destacados disponibles.</div></div>';
+}
+</script>
+{% endblock %}

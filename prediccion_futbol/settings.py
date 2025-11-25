@@ -165,6 +165,8 @@ LOGIN_REDIRECT_URL = 'partidos:home'
 LOGOUT_REDIRECT_URL = 'auth:login'
 
 # API Keys
-BESOCCER_API_KEY = config('BESOCCER_API_KEY', default='')
-GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
+BESOCCER_API_KEY = config('BESOCCER_API_KEY', default='fbe606a6eda33a3a249cfdb242d4f163')
+BESOCCER_API_URL = config('BESOCCER_API_URL', default='https://api.besoccer.com')
+BESOCCER_TOKEN = config('BESOCCER_TOKEN', default='')  # Token adicional si es requerido
+GEMINI_API_KEY = config('GEMINI_API_KEY', default='AIzaSyDizbSmH5i5X6gHxOwCxr6vtEVsztlXLQE')
 
