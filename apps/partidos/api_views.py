@@ -219,13 +219,19 @@ class HomeDataAPIView(View):
                     stats_local = {}
                     stats_visitante = {}
                 
+                # Asegurar que siempre haya nombres y escudos
+                nombre_local = (partido.equipo_local.nombre if partido.equipo_local and partido.equipo_local.nombre else 'Equipo Local') or 'Equipo Local'
+                escudo_local = (partido.equipo_local.escudo if partido.equipo_local and partido.equipo_local.escudo else '') or ''
+                nombre_visitante = (partido.equipo_visitante.nombre if partido.equipo_visitante and partido.equipo_visitante.nombre else 'Equipo Visitante') or 'Equipo Visitante'
+                escudo_visitante = (partido.equipo_visitante.escudo if partido.equipo_visitante and partido.equipo_visitante.escudo else '') or ''
+                
                 proximos.append({
                     'id': partido.id,
                     'id_api': partido.id_api,
                     'equipo_local': {
                         'id': partido.equipo_local.id_api if partido.equipo_local else None,
-                        'nombre': partido.equipo_local.nombre if partido.equipo_local else '',
-                        'escudo': partido.equipo_local.escudo if partido.equipo_local else '',
+                        'nombre': nombre_local,
+                        'escudo': escudo_local,
                         'forma': forma_local,
                         'posicion': stats_local.get('posicion') if stats_local else None,
                         'estadisticas': {
@@ -240,8 +246,8 @@ class HomeDataAPIView(View):
                     },
                     'equipo_visitante': {
                         'id': partido.equipo_visitante.id_api if partido.equipo_visitante else None,
-                        'nombre': partido.equipo_visitante.nombre if partido.equipo_visitante else '',
-                        'escudo': partido.equipo_visitante.escudo if partido.equipo_visitante else '',
+                        'nombre': nombre_visitante,
+                        'escudo': escudo_visitante,
                         'forma': forma_visitante,
                         'posicion': stats_visitante.get('posicion') if stats_visitante else None,
                         'estadisticas': {

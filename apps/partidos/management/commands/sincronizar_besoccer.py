@@ -72,22 +72,34 @@ class Command(BaseCommand):
                     # La API usa shield o shield_big para el escudo
                     escudo = equipo_data.get('shield_big') or equipo_data.get('shield') or equipo_data.get('logo') or equipo_data.get('image') or ''
                     
-                    if not nombre:
+                    if not nombre or nombre.strip() == '':
                         # Si no hay nombre, usar el fullName o generar uno
                         nombre = equipo_data.get('fullName') or f'Equipo {equipo_id}'
                     
-                    if not nombre_corto:
+                    # Asegurar que el nombre no esté vacío
+                    nombre = nombre.strip() if nombre else f'Equipo {equipo_id}'
+                    
+                    if not nombre_corto or nombre_corto.strip() == '':
                         # Generar nombre corto desde el nombre
                         nombre_corto = nombre[:3].upper() if len(nombre) >= 3 else nombre.upper()
                     
+                    # Actualizar incluso si el equipo ya existe (para corregir nombres vacíos)
                     equipo, created = Equipo.objects.update_or_create(
                         id_api=equipo_id,
                         defaults={
                             'nombre': nombre,
                             'nombre_corto': nombre_corto,
-                            'escudo': escudo
+                            'escudo': escudo if escudo else None
                         }
                     )
+                    
+                    # Si el equipo ya existía pero tenía nombre vacío, actualizarlo
+                    if not created and (not equipo.nombre or equipo.nombre.strip() == ''):
+                        equipo.nombre = nombre
+                        equipo.nombre_corto = nombre_corto
+                        if escudo:
+                            equipo.escudo = escudo
+                        equipo.save()
                     
                     if created:
                         equipos_creados += 1
