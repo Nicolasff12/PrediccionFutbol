@@ -93,24 +93,26 @@ WSGI_APPLICATION = 'prediccion_futbol.wsgi.application'
 USE_POSTGRES = config('USE_POSTGRES', default=False, cast=bool)
 
 if USE_POSTGRES:
+    # Configuración de PostgreSQL para Railway
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DB_NAME', default='prediccion_futbol'),
+            'NAME': config('DB_NAME', default='railway'),
             'USER': config('DB_USER', default='postgres'),
-            'PASSWORD': config('DB_PASSWORD', default='postgres'),
-            'HOST': config('DB_HOST', default='localhost'),
+            'PASSWORD': config('DB_PASSWORD', default=''),
+            'HOST': config('DB_HOST', default='postgres.railway.internal'),
             'PORT': config('DB_PORT', default='5432'),
         }
     }
 else:
-    # SQLite for development
+    # SQLite para desarrollo local
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
 
 
 # Password validation
