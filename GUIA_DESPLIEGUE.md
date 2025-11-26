@@ -42,6 +42,7 @@ Railway es la opción más fácil y recomendada para Django.
 SECRET_KEY=tu-secret-key-generada
 DEBUG=False
 ALLOWED_HOSTS=*.railway.app,localhost
+CSRF_TRUSTED_ORIGINS=https://*.railway.app,https://tu-proyecto.railway.app
 USE_POSTGRES=True
 DB_NAME=${{Postgres.DATABASE}}
 DB_USER=${{Postgres.USER}}
@@ -51,6 +52,8 @@ DB_PORT=${{Postgres.PORT}}
 BESOCCER_API_KEY=tu-api-key-besoccer
 GEMINI_API_KEY=tu-api-key-gemini
 ```
+
+**Nota importante:** Reemplaza `tu-proyecto.railway.app` con tu dominio real de Railway (ej: `web-production-7171.up.railway.app`)
 
 **Nota:** Las variables `${{Postgres.*}}` se llenan automáticamente si conectaste la base de datos.
 
