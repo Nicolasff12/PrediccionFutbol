@@ -129,6 +129,10 @@ PrediccionFutbol/
 
 5. **Mis Predicciones**: Ve a "Mis Predicciones" para ver tu historial y estadísticas.
 
+## Despliegue
+
+Para desplegar en producción, consulta la [Guía de Despliegue](GUIA_DESPLIEGUE.md) que incluye instrucciones para Railway, Render y otras plataformas.
+
 ## Notas
 
 - Asegúrate de tener las API keys configuradas correctamente en el archivo `.env`

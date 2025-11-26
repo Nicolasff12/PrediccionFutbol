@@ -1,37 +1,57 @@
+# Python
 *.pyc
 __pycache__/
-*.log
-*.pot
-*.pyc
 *.pyo
 *.pyd
 .Python
-env/
-venv/
-ENV/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
+*.log
+*.pot
 *.egg-info/
 .installed.cfg
 *.egg
+
+# Virtual environments
+env/
+venv/
+ENV/
+.venv/
+
+# Build files
+build/
+develop-eggs/
+dist/
+sdist/
+var/
+wheels/
+lib/
+lib64/
+parts/
+
+# IDE
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Django
 db.sqlite3
+db.sqlite3-journal
+*.log
 .env
+.env.local
 media/
 staticfiles/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter Notebook
+.ipynb_checkpoints
 
