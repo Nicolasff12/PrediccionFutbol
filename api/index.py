@@ -19,7 +19,8 @@ django.setup()
 # Import WSGI application
 from prediccion_futbol.wsgi import application
 
-# Export for Vercel
-def handler(request):
-    return application
+# Export for Vercel - el handler debe ser el objeto WSGI application
+# Vercel con @vercel/python espera que exportemos 'handler' o 'app'
+handler = application
+app = application
 
