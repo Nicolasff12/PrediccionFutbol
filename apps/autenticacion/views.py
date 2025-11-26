@@ -11,7 +11,7 @@ from .models import Usuario
 def registro_view(request):
     """Vista para registro de nuevos usuarios"""
     if request.user.is_authenticated:
-        return redirect('partidos:home')
+        return redirect('partidos:landing')
     
     if request.method == 'POST':
         form = RegistroForm(request.POST)
@@ -29,7 +29,7 @@ def registro_view(request):
 def login_view(request):
     """Vista para login de usuarios"""
     if request.user.is_authenticated:
-        return redirect('partidos:home')
+        return redirect('partidos:landing')
     
     if request.method == 'POST':
         form = LoginForm(request.POST)
@@ -40,7 +40,7 @@ def login_view(request):
             if user is not None:
                 login(request, user)
                 messages.success(request, f'¡Bienvenido, {user.get_full_name() or user.username}!')
-                return redirect('partidos:home')
+                return redirect('partidos:landing')
             else:
                 messages.error(request, 'Usuario o contraseña incorrectos.')
     else:

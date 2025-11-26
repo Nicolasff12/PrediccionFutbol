@@ -57,9 +57,13 @@ GEMINI_API_KEY=tu-api-key-gemini
 5. **Configurar Build Settings**
    - Railway detectará automáticamente Django
    - El proyecto ya incluye un `Procfile` y `start.sh` que manejan todo automáticamente
+   - El `Procfile` incluye:
+     - `web`: Comando para iniciar la aplicación (usa `start.sh`)
+     - `release`: Comando para ejecutar migraciones antes del despliegue
    - Si necesitas configurar manualmente:
      - **Build Command:** `pip install -r requirements.txt`
      - **Start Command:** (dejar vacío, el Procfile lo maneja)
+   - **Importante:** El puerto se obtiene automáticamente de la variable `PORT` que Railway proporciona
 
 6. **Desplegar**
    - Railway desplegará automáticamente
@@ -229,13 +233,22 @@ whitenoise==6.6.0
 gunicorn==21.2.0
 ```
 
-### 2. Crear archivo Procfile (para Render/Fly.io)
+### 2. Archivo Procfile
 
-Crea un archivo `Procfile` en la raíz:
+El proyecto ya incluye un `Procfile` configurado:
 
 ```
-web: gunicorn prediccion_futbol.wsgi:application --bind 0.0.0.0:$PORT
+web: bash start.sh
+release: python manage.py migrate --noinput
 ```
+
+El script `start.sh` maneja:
+- Creación del directorio `staticfiles`
+- Ejecución de migraciones
+- Recolección de archivos estáticos
+- Inicio de Gunicorn con el puerto correcto (`$PORT` o 8080 por defecto)
+
+**Importante:** El puerto se obtiene de la variable de entorno `PORT` que la plataforma proporciona automáticamente.
 
 ### 3. Verificar settings.py
 

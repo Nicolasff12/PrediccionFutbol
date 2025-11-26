@@ -43,9 +43,9 @@ def sincronizar_partidos_view(request):
             messages.success(request, 'Partidos sincronizados correctamente.')
         else:
             messages.error(request, 'Error al sincronizar partidos. Verifique la configuración de la API.')
-        return redirect('partidos:home')
+        return redirect('partidos:landing')
     
-    return redirect('partidos:home')
+    return redirect('partidos:landing')
 
 
 @login_required
