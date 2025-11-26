@@ -5,7 +5,8 @@ from . import api_views
 app_name = 'partidos'
 
 urlpatterns = [
-    path('', views.home_view, name='home'),
+    path('', views.landing_view, name='landing'),
+    path('partidos/', views.home_view, name='home'),
     path('sincronizar/', views.sincronizar_partidos_view, name='sincronizar'),
     path('equipos/', views.lista_equipos_view, name='lista_equipos'),
     path('equipos/<int:equipo_id>/', views.detalle_equipo_view, name='detalle_equipo'),

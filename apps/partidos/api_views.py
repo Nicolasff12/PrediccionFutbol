@@ -90,7 +90,6 @@ def _calcular_probabilidades_rapidas(equipo_local_id: int, equipo_visitante_id: 
         return {'local': 40.0, 'empate': 30.0, 'visitante': 30.0}
 
 
-@method_decorator(login_required, name='dispatch')
 class HomeDataAPIView(View):
     """API para obtener todos los datos del HOME"""
     

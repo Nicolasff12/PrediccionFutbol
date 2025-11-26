@@ -11,7 +11,11 @@ logger = logging.getLogger(__name__)
 partido_controller = PartidoController()
 
 
-@login_required
+def landing_view(request):
+    """Vista de landing page - Página de inicio con información de la aplicación"""
+    return render(request, 'partidos/landing.html')
+
+
 def home_view(request):
     """Vista principal con todos los datos importantes de partidos"""
     # Obtener datos del controlador
