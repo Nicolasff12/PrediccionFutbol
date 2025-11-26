@@ -53,9 +53,16 @@ BESOCCER_API_KEY=tu-api-key-besoccer
 GEMINI_API_KEY=tu-api-key-gemini
 ```
 
-**Nota importante:** Reemplaza `tu-proyecto.railway.app` con tu dominio real de Railway (ej: `web-production-7171.up.railway.app`)
+**Nota importante:** 
+- Reemplaza `tu-proyecto.railway.app` con tu dominio real de Railway (ej: `web-production-7171.up.railway.app`)
+- **CRÍTICO:** Asegúrate de que `USE_POSTGRES=True` esté configurado, de lo contrario usará SQLite y las migraciones fallarán
+- Las variables `${{Postgres.*}}` se llenan automáticamente si conectaste la base de datos PostgreSQL en Railway
 
-**Nota:** Las variables `${{Postgres.*}}` se llenan automáticamente si conectaste la base de datos.
+**⚠️ Si ves errores de "no such table":**
+1. Verifica que `USE_POSTGRES=True` esté en las variables de entorno
+2. Verifica que todas las variables de PostgreSQL estén configuradas
+3. El comando `release` en el Procfile ejecuta las migraciones automáticamente
+4. Si las migraciones fallan, revisa los logs de Railway para ver el error específico
 
 5. **Configurar Build Settings**
    - Railway detectará automáticamente Django
