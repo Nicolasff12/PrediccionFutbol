@@ -56,9 +56,10 @@ GEMINI_API_KEY=tu-api-key-gemini
 
 5. **Configurar Build Settings**
    - Railway detectará automáticamente Django
-   - Si no, configura:
-     - **Build Command:** `pip install -r requirements.txt && python manage.py migrate && python manage.py collectstatic --noinput`
-     - **Start Command:** `python manage.py runserver 0.0.0.0:$PORT`
+   - El proyecto ya incluye un `Procfile` y `start.sh` que manejan todo automáticamente
+   - Si necesitas configurar manualmente:
+     - **Build Command:** `pip install -r requirements.txt`
+     - **Start Command:** (dejar vacío, el Procfile lo maneja)
 
 6. **Desplegar**
    - Railway desplegará automáticamente
